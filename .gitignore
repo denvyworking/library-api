@@ -1,0 +1,29 @@
+# бинарники
+/main
+/migrate
+/bin/
+
+# Тестовый рудимент
+*.out
+
+# логи
+*.log
+
+# Env
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Кеш тестов
+/tmp/
+
+
+build.sh
