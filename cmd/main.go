@@ -1,8 +1,14 @@
+// @title Library API
+// @version 1.0
+// @description Production-ready book catalog API
+// @host localhost:8080
+// @BasePath /
 package main
 
 import (
 	"context"
 	"leti/pkg/api"
+	psg "leti/pkg/repository/postgres"
 	"leti/pkg/service"
 	"log/slog"
 	"net/http"
@@ -11,25 +17,27 @@ import (
 	"syscall"
 	"time"
 
-	//"leti/pkg/models"
-	psg "leti/pkg/repository/postgres"
-	"log"
+	_ "leti/docs" // ← генерируется swag init
 
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/gorilla/mux"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
-func main() {
-	connStr := os.Getenv("DB_CONNECTION_STRING")
-	if connStr == "" {
-		connStr = "postgres://postgres:postgres@postgres:5432/courses"
+func getDBConnectionString() string {
+	if conn := os.Getenv("DB_CONNECTION_STRING"); conn != "" {
+		return conn
 	}
+	return "postgresql://postgres:postgres@localhost:5432/courses?sslmode=disable"
+}
 
+func main() {
+	connStr := getDBConnectionString()
 	db, err := psg.New(connStr)
 	if err != nil {
-		log.Fatal(err.Error())
+		slog.Error("Failed to connect to DB", "error", err)
+		os.Exit(1)
 	}
+	defer db.Close()
 
 	authToken := os.Getenv("AUTH_TOKEN")
 	if authToken == "" {
@@ -39,8 +47,13 @@ func main() {
 	srv := service.NewService(db)
 	router := mux.NewRouter()
 	logger := slog.Default()
-	api := api.New(router, srv, logger, authToken)
-	api.RegistreRoutes()
+	apiHandler := api.New(router, srv, logger, authToken)
+	apiHandler.RegistreRoutes()
+
+	// Добавляем Swagger UI
+	router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
+	))
 
 	server := &http.Server{
 		Addr:         ":8080",
@@ -64,8 +77,6 @@ func main() {
 	logger.Info("Shutting down server...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	// Docker и Kubernetes убьют процессы через 30 секунд по умолчанию
-	// *** в данном проекте не целесообразно столько ждать, поэтому 10 сек. ***
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
