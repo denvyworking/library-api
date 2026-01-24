@@ -151,3 +151,6 @@ go test -v -tags="integration e2e" ./...
 ./goTests.sh
 ```
 
+### Документация API
+Доступна по адресу: http://localhost:8080/swagger/index.html
+
