@@ -22,8 +22,7 @@ func getTestDBConn() string {
 	if conn := os.Getenv("TEST_DATABASE_URL"); conn != "" {
 		return conn
 	}
-	// Используем пользователя 'postgres', порт 5433 (если запущен через -p 5433:5432)
-	return "postgres://postgres@localhost:5433/leti_test?sslmode=disable"
+	return "postgres://postgres:postgres@localhost:45432/leti_test?sslmode=disable"
 }
 
 // setupTestDB применяет миграции и возвращает репозиторий для тестов

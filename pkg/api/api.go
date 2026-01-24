@@ -31,7 +31,7 @@ func (api *api) RegistreRoutes() {
 func (api *api) HandleBooks() {
 	// Публичные GET-запросы - без middleware
 	api.r.HandleFunc("/api/books", api.getBooks).Methods(http.MethodGet)
-	api.r.HandleFunc("/api/books", api.getBookById).Methods(http.MethodGet).Queries("id", "{id}")
+	api.r.HandleFunc("/api/book", api.getBookById).Methods(http.MethodGet).Queries("id", "{id}")
 	api.r.HandleFunc("/api/books/withauthors", api.booksWithAuthor).Methods(http.MethodGet)
 
 	// Приватные операции - с middleware
