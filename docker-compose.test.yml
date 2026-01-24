@@ -1,0 +1,15 @@
+# docker-compose.test.yml
+version: '3.8'
+services:
+  postgres-test:
+    image: postgres:17
+    ports:
+      - "45432:5432"
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: leti_test  # ← Автоматически создаст БД
+    volumes:
+      - pg_test:/var/lib/postgresql/data
+
+volumes:
+  pg_test:

@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"testing"
 
-	"leti/pkg/models"
+	"leti/pkg/api/dto"
 	psg "leti/pkg/repository/postgres"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -22,7 +22,7 @@ func getTestDBConn() string {
 	if conn := os.Getenv("TEST_DATABASE_URL"); conn != "" {
 		return conn
 	}
-	return "postgres://postgres@localhost:5433/leti_test?sslmode=disable"
+	return "postgres://postgres:postgres@localhost:45432/leti_test?sslmode=disable"
 }
 
 func setupTestDBWithMigrations(t *testing.T) *psg.PGRepo {
@@ -57,37 +57,51 @@ func setupTestDBWithMigrations(t *testing.T) *psg.PGRepo {
 	return repo
 }
 
+// ИСПРАВЛЕНО: используем dto.CreateAuthorRequest
 func createAuthor(t *testing.T, baseURL, name string) int {
-	body := marshal(t, models.Author{Author: name})
+	body := marshal(t, dto.CreateAuthorRequest{Name: name})
 	req := newRequest(t, http.MethodPost, baseURL+"/api/authors", body)
 	resp := doRequest(t, req)
 	defer resp.Body.Close()
-	require.Equal(t, http.StatusOK, resp.StatusCode)
-	var id int
-	json.NewDecoder(resp.Body).Decode(&id)
-	return id
+	require.Equal(t, http.StatusCreated, resp.StatusCode)
+	var result map[string]int
+	json.NewDecoder(resp.Body).Decode(&result)
+	return result["id"]
 }
 
+// ИСПРАВЛЕНО: используем dto.CreateGenreRequest
 func createGenre(t *testing.T, baseURL, name string) int {
-	body := marshal(t, models.Genre{Genre: name})
+	body := marshal(t, dto.CreateGenreRequest{Name: name})
 	req := newRequest(t, http.MethodPost, baseURL+"/api/genres", body)
 	resp := doRequest(t, req)
 	defer resp.Body.Close()
-	require.Equal(t, http.StatusOK, resp.StatusCode)
-	var id int
-	json.NewDecoder(resp.Body).Decode(&id)
-	return id
+	require.Equal(t, http.StatusCreated, resp.StatusCode)
+	var result map[string]int
+	json.NewDecoder(resp.Body).Decode(&result)
+	return result["id"]
 }
 
-func createBook(t *testing.T, baseURL, token string, book models.Book) int {
+// ИСПРАВЛЕНО: путь для получения книги по ID
+func getBookById(t *testing.T, baseURL, id string) dto.BookResponse {
+	req := newRequest(t, http.MethodGet, baseURL+"/api/book?id="+id, nil)
+	resp := doRequest(t, req)
+	defer resp.Body.Close()
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+	var book dto.BookResponse
+	json.NewDecoder(resp.Body).Decode(&book)
+	return book
+}
+
+// Остальные функции без изменений (они уже правильные)
+func createBook(t *testing.T, baseURL, token string, book dto.CreateBookRequest) int {
 	body := marshal(t, book)
 	req := newRequestWithAuth(t, http.MethodPost, baseURL+"/api/books", token, body)
 	resp := doRequest(t, req)
 	defer resp.Body.Close()
-	require.Equal(t, http.StatusOK, resp.StatusCode)
-	var id int
-	json.NewDecoder(resp.Body).Decode(&id)
-	return id
+	require.Equal(t, http.StatusCreated, resp.StatusCode)
+	var result map[string]int
+	json.NewDecoder(resp.Body).Decode(&result)
+	return result["id"]
 }
 
 func deleteBook(t *testing.T, baseURL, token string, id int) {
@@ -97,42 +111,42 @@ func deleteBook(t *testing.T, baseURL, token string, id int) {
 	require.Equal(t, http.StatusNoContent, resp.StatusCode)
 }
 
-func getBooksWithAuthors(t *testing.T, baseURL, token string) []models.BookWithAuthor {
+func getBooksWithAuthors(t *testing.T, baseURL, token string) []dto.BookWithAuthorResponse {
 	req := newRequestWithAuth(t, http.MethodGet, baseURL+"/api/books/withauthors", token, nil)
 	resp := doRequest(t, req)
 	defer resp.Body.Close()
 	require.Equal(t, http.StatusOK, resp.StatusCode)
-	var books []models.BookWithAuthor
+	var books []dto.BookWithAuthorResponse
 	json.NewDecoder(resp.Body).Decode(&books)
 	return books
 }
 
-func getBooks(t *testing.T, baseURL, token string) []models.Book {
+func getBooks(t *testing.T, baseURL, token string) []dto.BookResponse {
 	req := newRequestWithAuth(t, http.MethodGet, baseURL+"/api/books", token, nil)
 	resp := doRequest(t, req)
 	defer resp.Body.Close()
 	require.Equal(t, http.StatusOK, resp.StatusCode)
-	var books []models.Book
+	var books []dto.BookResponse
 	json.NewDecoder(resp.Body).Decode(&books)
 	return books
 }
 
-func getAuthors(t *testing.T, baseURL string) []models.Author {
+func getAuthors(t *testing.T, baseURL string) []dto.AuthorResponse {
 	req := newRequest(t, http.MethodGet, baseURL+"/api/authors", nil)
 	resp := doRequest(t, req)
 	defer resp.Body.Close()
 	require.Equal(t, http.StatusOK, resp.StatusCode)
-	var authors []models.Author
+	var authors []dto.AuthorResponse
 	json.NewDecoder(resp.Body).Decode(&authors)
 	return authors
 }
 
-func getGenres(t *testing.T, baseURL string) []models.Genre {
+func getGenres(t *testing.T, baseURL string) []dto.GenreResponse {
 	req := newRequest(t, http.MethodGet, baseURL+"/api/genres", nil)
 	resp := doRequest(t, req)
 	defer resp.Body.Close()
 	require.Equal(t, http.StatusOK, resp.StatusCode)
-	var genres []models.Genre
+	var genres []dto.GenreResponse
 	json.NewDecoder(resp.Body).Decode(&genres)
 	return genres
 }

@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"testing"
 
+	"leti/pkg/api/dto"
 	"leti/pkg/models"
 	"leti/pkg/service"
 	"log/slog"
@@ -52,11 +53,11 @@ func TestE2E_FullBookFlow(t *testing.T) {
 			authorID := createAuthor(t, ts.URL, tc.author)
 			genreID := createGenre(t, ts.URL, tc.genre)
 
-			bookID := createBook(t, ts.URL, authToken, models.Book{
-				Name:      tc.name,
-				Author_id: authorID,
-				Genre_id:  genreID,
-				Price:     tc.price,
+			bookID := createBook(t, ts.URL, authToken, dto.CreateBookRequest{
+				Name:     tc.name,
+				AuthorID: authorID,
+				GenreID:  genreID,
+				Price:    tc.price,
 			})
 
 			books := getBooksWithAuthors(t, ts.URL, authToken)
@@ -97,7 +98,7 @@ func TestE2E_InvalidJSON(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	// Проверяем
-	require.Equal(t, http.StatusInternalServerError, w.Code)
+	require.Equal(t, http.StatusBadRequest, w.Code)
 }
 
 func TestE2E_DeleteBookByWrongID(t *testing.T) {
@@ -115,15 +116,15 @@ func TestE2E_DeleteBookByWrongID(t *testing.T) {
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
-	authorID := createAuthor(t, ts.URL, "Федор Достаевский")
+	authorID := createAuthor(t, ts.URL, "Иван Тургеньев")
 
-	genreID := createGenre(t, ts.URL, "Роман")
+	genreID := createGenre(t, ts.URL, "Рассказ")
 
-	createBook(t, ts.URL, authToken, models.Book{
-		Name:      "Идиот",
-		Author_id: authorID,
-		Genre_id:  genreID,
-		Price:     300,
+	createBook(t, ts.URL, authToken, dto.CreateBookRequest{
+		Name:     "МуМу",
+		AuthorID: authorID,
+		GenreID:  genreID,
+		Price:    100,
 	})
 
 	deleteBook(t, ts.URL, authToken, 999)
@@ -179,6 +180,52 @@ func TestE2E_Authorization(t *testing.T) {
 
 }
 
+func TestE2E_GetBookById(t *testing.T) {
+	repo := setupTestDBWithMigrations(t)
+	srv := service.NewService(repo)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	authToken := "adminToken"
+
+	r := mux.NewRouter()
+	apiInst := New(r, srv, logger, authToken)
+	apiInst.HandleBooks()
+	apiInst.HandleAuthors()
+	apiInst.HandleGenres()
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	testCases := []struct {
+		booksNumber int
+		author      string
+		genre       string
+		name        string
+		price       int
+	}{
+		{1, "Антон Чехов", "Рассказ", "Вишнёвый сад", 750},
+		{2, "Александр Пушкин", "Роман", "Евгений Онегин", 400},
+	}
+
+	for _, tc := range testCases {
+		t.Run(strconv.Itoa(tc.booksNumber), func(t *testing.T) {
+			authorID := createAuthor(t, ts.URL, tc.author)
+			genreID := createGenre(t, ts.URL, tc.genre)
+
+			bookID := createBook(t, ts.URL, authToken, dto.CreateBookRequest{
+				Name:     tc.name,
+				AuthorID: authorID,
+				GenreID:  genreID,
+				Price:    tc.price,
+			})
+
+			book := getBookById(t, ts.URL, strconv.Itoa(bookID))
+			require.Equal(t, tc.name, book.Name)
+			require.Equal(t, tc.price, book.Price)
+
+		})
+	}
+}
+
 func TestE2E_PatchBook(t *testing.T) {
 	repo := setupTestDBWithMigrations(t)
 	srv := service.NewService(repo)
@@ -197,11 +244,11 @@ func TestE2E_PatchBook(t *testing.T) {
 	authorID := createAuthor(t, ts.URL, "Достоевский")
 	genreID := createGenre(t, ts.URL, "Роман")
 
-	bookID := createBook(t, ts.URL, authToken, models.Book{
-		Name:      "Идиот",
-		Author_id: authorID,
-		Genre_id:  genreID,
-		Price:     300,
+	bookID := createBook(t, ts.URL, authToken, dto.CreateBookRequest{
+		Name:     "Идиот",
+		AuthorID: authorID,
+		GenreID:  genreID,
+		Price:    599,
 	})
 
 	// Обновляем только цену
