@@ -89,10 +89,10 @@ func (api *api) createBook(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param book body dto.UpdateBookRequest true "Поля для обновления"
+// @Param id query int true "ID книги"
 // @Success 200 {object} dto.BookResponse "Измененная книга"
 // @Failure 400 {object} string "Невалидные данные"
 // @Failure 401 {object} string "Неавторизован"
-// @Router /api/books [patch]
 func (api *api) updateBook(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idStr, ok := vars["id"]
@@ -148,10 +148,10 @@ func (api *api) updateBook(w http.ResponseWriter, r *http.Request) {
 // @Summary Удалить книгу из каталога
 // @Description Удаляет книгу из каталога по ID (требуется авторизация)
 // @Tags books
-// @Param id path int true "ID книги"
+// @Param id query int true "ID книги"
 // @Success 204
 // @Failure 401 {object} string "Неавторизован"
-// @Router /api/books/{id} [delete]
+// @Router /api/books [delete]
 func (api *api) deleteBook(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idStr, ok := vars["id"]
@@ -177,7 +177,7 @@ func (api *api) deleteBook(w http.ResponseWriter, r *http.Request) {
 // @Description Получает информацию о книге по ID в каталоге
 // @Tags books
 // @Produce json
-// @Param id path int true "ID книги"
+// @Param id query int false "ID книги"
 // @Success 200 {object} dto.BookResponse
 // @Failure 404 {object} string "Книга не найдена"
 // @Router /api/book/{id} [get]
