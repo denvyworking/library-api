@@ -1,4 +1,3 @@
-// cmd/migrate/main.go
 package main
 
 import (
@@ -21,15 +20,12 @@ func getDBConnectionString() string {
 	return "postgresql://postgres:postgres@localhost:5432/courses?sslmode=disable"
 }
 
-// getMigrationsPath определяет путь к папке с миграциями.
-// Поддерживает запуск как локально, так и в Docker.
 func getMigrationsPath() string {
-	// Если задана переменная окружения — используем её (для Docker)
+	// Если задана переменная окружения - используем её (для Docker)
 	if path := os.Getenv("MIGRATIONS_PATH"); path != "" {
 		return "file://" + filepath.ToSlash(path)
 	}
 
-	// Иначе — вычисляем относительно расположения этого файла (для локального запуска)
 	_, filename, _, _ := runtime.Caller(0)
 	dir := filepath.Dir(filename)
 	// Поднимаемся: cmd/migrate → корень проекта → migrations/

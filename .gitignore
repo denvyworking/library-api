@@ -25,5 +25,8 @@ Thumbs.db
 # Кеш тестов
 /tmp/
 
+# Generated OpenAPI docs
+docs/
+
 
 build.sh
