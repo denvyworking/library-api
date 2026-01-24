@@ -180,7 +180,7 @@ func (api *api) deleteBook(w http.ResponseWriter, r *http.Request) {
 // @Param id query int false "ID книги"
 // @Success 200 {object} dto.BookResponse
 // @Failure 404 {object} string "Книга не найдена"
-// @Router /api/book/{id} [get]
+// @Router /api/book [get]
 func (api *api) getBookById(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idStr, ok := vars["id"]
