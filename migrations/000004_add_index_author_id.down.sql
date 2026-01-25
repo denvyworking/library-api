@@ -1,0 +1,2 @@
+DROP INDEX IF EXISTS authors_id;
+DROP INDEX IF EXISTS genres_id;
