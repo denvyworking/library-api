@@ -8,6 +8,7 @@ package main
 import (
 	"context"
 	"leti/pkg/api"
+	"leti/pkg/auth"
 	psg "leti/pkg/repository/postgres"
 	"leti/pkg/service"
 	"log/slog"
@@ -39,15 +40,18 @@ func main() {
 	}
 	defer db.Close()
 
-	authToken := os.Getenv("AUTH_TOKEN")
-	if authToken == "" {
-		authToken = "adminToken"
+	// Генерация секретного ключа (в production — из переменной окружения!)
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		jwtSecret = "secret-jwt-key-for-development" // ← ТОЛЬКО для dev!
 	}
 
+	jwtService := auth.NewJWTService(jwtSecret)
 	srv := service.NewService(db)
 	router := mux.NewRouter()
 	logger := slog.Default()
-	apiHandler := api.New(router, srv, logger, authToken)
+	// jwtService *auth.JWTService
+	apiHandler := api.New(router, srv, logger, jwtService)
 	apiHandler.RegistreRoutes()
 
 	// Добавляем Swagger UI

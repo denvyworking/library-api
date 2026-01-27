@@ -1,6 +1,7 @@
 package api
 
 import (
+	"leti/pkg/auth"
 	"leti/pkg/service"
 	"log/slog"
 	"net/http"
@@ -12,17 +13,18 @@ import (
 // gorillaMux
 
 type api struct {
-	r         *mux.Router
-	srv       *service.Service
-	logger    *slog.Logger
-	authToken string
+	r          *mux.Router
+	srv        *service.Service
+	logger     *slog.Logger
+	jwtService *auth.JWTService
 }
 
-func New(router *mux.Router, srv *service.Service, logger *slog.Logger, at string) *api {
-	return &api{r: router, srv: srv, logger: logger, authToken: at}
+func New(router *mux.Router, srv *service.Service, logger *slog.Logger, at *auth.JWTService) *api {
+	return &api{r: router, srv: srv, logger: logger, jwtService: at}
 }
 
 func (api *api) RegistreRoutes() {
+	api.HandleAuth()
 	api.HandleBooks()
 	api.HandleAuthors()
 	api.HandleGenres()
@@ -50,6 +52,10 @@ func (api *api) HandleAuthors() {
 func (api *api) HandleGenres() {
 	api.r.HandleFunc("/api/genres", api.postGenres).Methods(http.MethodPost)
 	api.r.HandleFunc("/api/genres", api.getGenres).Methods(http.MethodGet)
+}
+
+func (api *api) HandleAuth() {
+	api.r.HandleFunc("/api/auth/login", api.login).Methods(http.MethodPost)
 }
 
 func (api *api) ListenAndServe(addr string) error {
