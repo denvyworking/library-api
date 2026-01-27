@@ -35,13 +35,15 @@ func (api *api) login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "password cannot be empty", http.StatusBadRequest)
 	}
 
-	if !api.validateCredentials(req.Username, req.Password) {
+	user, err := api.srv.ValidateUserCredentials(r.Context(), req.Username, req.Password)
+	if err != nil {
+		api.logger.Error("Invalid credentials", "username", req.Username, "error", err)
 		http.Error(w, "invalid credentials", http.StatusUnauthorized)
 		return
 	}
 
-	// Генерация JWT токена
-	accessToken, err := api.jwtService.GenerateAccessToken(1, "admin")
+	// Генерация JWT с реальными данными пользователя
+	accessToken, err := api.jwtService.GenerateAccessToken(user.ID, user.Role)
 	if err != nil {
 		api.logger.Error("Failed to generate access token", "error", err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
@@ -55,9 +57,4 @@ func (api *api) login(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 
-}
-
-func (api *api) validateCredentials(username, password string) bool {
-	// TODO: заменить на проверку в БД
-	return username == "admin" && password == "password"
 }

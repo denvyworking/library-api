@@ -5,17 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"leti/pkg/models"
-	"leti/pkg/repository"
 	"strings"
 )
-
-type Service struct {
-	db repository.DataBase
-}
-
-func NewService(db repository.DataBase) *Service {
-	return &Service{db: db}
-}
 
 func (s *Service) CreateBook(ctx context.Context, book models.Book) (int, error) {
 	return s.db.NewBook(ctx, book)

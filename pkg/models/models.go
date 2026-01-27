@@ -3,7 +3,7 @@ package models
 type User struct {
 	ID       int    `db:"id" json:"id"`
 	Username string `db:"username" json:"username"`
-	Password string `db:"password" json:"-"` // ← не возвращаем пароль в API
+	Password string `db:"password" json:"-"` // never to API!
 	Role     string `db:"role" json:"role"`
 }
 type Book struct {
