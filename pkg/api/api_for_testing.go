@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -12,11 +13,16 @@ import (
 	"testing"
 
 	"leti/pkg/api/dto"
+	"leti/pkg/auth"
 	psg "leti/pkg/repository/postgres"
+	"leti/pkg/service"
 
 	"github.com/golang-migrate/migrate/v4"
+	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
 )
+
+const testJWTSecret = "my-super-secret-jwt-key-32-characters-long"
 
 func getTestDBConn() string {
 	if conn := os.Getenv("TEST_DATABASE_URL"); conn != "" {
@@ -57,7 +63,6 @@ func setupTestDBWithMigrations(t *testing.T) *psg.PGRepo {
 	return repo
 }
 
-// ИСПРАВЛЕНО: используем dto.CreateAuthorRequest
 func createAuthor(t *testing.T, baseURL, name string) int {
 	body := marshal(t, dto.CreateAuthorRequest{Name: name})
 	req := newRequest(t, http.MethodPost, baseURL+"/api/authors", body)
@@ -69,7 +74,6 @@ func createAuthor(t *testing.T, baseURL, name string) int {
 	return result["id"]
 }
 
-// ИСПРАВЛЕНО: используем dto.CreateGenreRequest
 func createGenre(t *testing.T, baseURL, name string) int {
 	body := marshal(t, dto.CreateGenreRequest{Name: name})
 	req := newRequest(t, http.MethodPost, baseURL+"/api/genres", body)
@@ -81,7 +85,6 @@ func createGenre(t *testing.T, baseURL, name string) int {
 	return result["id"]
 }
 
-// ИСПРАВЛЕНО: путь для получения книги по ID
 func getBookById(t *testing.T, baseURL, id string) dto.BookResponse {
 	req := newRequest(t, http.MethodGet, baseURL+"/api/book?id="+id, nil)
 	resp := doRequest(t, req)
@@ -92,7 +95,6 @@ func getBookById(t *testing.T, baseURL, id string) dto.BookResponse {
 	return book
 }
 
-// Остальные функции без изменений (они уже правильные)
 func createBook(t *testing.T, baseURL, token string, book dto.CreateBookRequest) int {
 	body := marshal(t, book)
 	req := newRequestWithAuth(t, http.MethodPost, baseURL+"/api/books", token, body)
@@ -151,11 +153,28 @@ func getGenres(t *testing.T, baseURL string) []dto.GenreResponse {
 	return genres
 }
 
+func login(t *testing.T, baseURL, username, password string) string {
+	body := marshal(t, map[string]string{
+		"username": username,
+		"password": password,
+	})
+
+	req := newRequest(t, http.MethodPost, baseURL+"/api/auth/login", body)
+	resp := doRequest(t, req)
+	defer resp.Body.Close()
+
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var result map[string]string
+	json.NewDecoder(resp.Body).Decode(&result)
+	return result["access_token"]
+}
+
 func newRequestWithAuth(t *testing.T, method, url, token string, body []byte) *http.Request {
 	req, err := http.NewRequest(method, url, bytes.NewBuffer(body))
 	require.NoError(t, err)
 	if token != "" {
-		req.Header.Set("Authorization", token)
+		req.Header.Set("Authorization", "Bearer "+token)
 	}
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
@@ -182,6 +201,15 @@ func marshal(t *testing.T, v interface{}) []byte {
 	data, err := json.Marshal(v)
 	require.NoError(t, err)
 	return data
+}
+
+func newTestAPI(srv *service.Service) *mux.Router {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	jwtService := auth.NewJWTService(testJWTSecret)
+	r := mux.NewRouter()
+	apiInst := New(r, srv, logger, jwtService)
+	apiInst.RegistreRoutes()
+	return r
 }
 
 func ptr[T any](v T) *T { return &v }

@@ -8,8 +8,7 @@ import (
 )
 
 const (
-	accessTokenTTL  = 15 * time.Minute
-	refreshTokenTTL = 7 * 24 * time.Hour
+	accessTokenTTL = 15 * time.Minute
 )
 
 type JWTService struct {

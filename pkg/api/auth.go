@@ -8,12 +8,8 @@ import (
 
 func (api *api) RightAuth(w http.ResponseWriter, r *http.Request) bool {
 	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
-		http.Error(w, "missing Authorization header", http.StatusUnauthorized)
-		return false
-	}
+	api.logger.Info("Auth header", "header", authHeader)
 
-	// Ожидаем формат: "Bearer <token>"
 	const bearerPrefix = "Bearer "
 	if !strings.HasPrefix(authHeader, bearerPrefix) {
 		http.Error(w, "invalid Authorization header format", http.StatusUnauthorized)
@@ -21,20 +17,16 @@ func (api *api) RightAuth(w http.ResponseWriter, r *http.Request) bool {
 	}
 
 	tokenStr := strings.TrimPrefix(authHeader, bearerPrefix)
-	if tokenStr == "" {
-		http.Error(w, "empty token", http.StatusUnauthorized)
-		return false
-	}
+	api.logger.Info("Token to parse", "token", tokenStr)
 
 	claims, err := api.jwtService.ParseToken(tokenStr)
 	if err != nil {
-		api.logger.Error("Invalid JWT token", "error", err, "token", tokenStr)
+		api.logger.Error("JWT parse error", "error", err)
 		http.Error(w, "invalid token", http.StatusUnauthorized)
 		return false
 	}
 
 	ctx := context.WithValue(r.Context(), "user_claims", claims)
 	*r = *r.WithContext(ctx)
-
 	return true
 }

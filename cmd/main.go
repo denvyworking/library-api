@@ -50,11 +50,9 @@ func main() {
 	srv := service.NewService(db)
 	router := mux.NewRouter()
 	logger := slog.Default()
-	// jwtService *auth.JWTService
 	apiHandler := api.New(router, srv, logger, jwtService)
 	apiHandler.RegistreRoutes()
 
-	// Добавляем Swagger UI
 	router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
 		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
 	))
