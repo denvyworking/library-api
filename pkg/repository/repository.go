@@ -24,8 +24,13 @@ type GenreDB interface {
 	NewGenre(context.Context, models.Genre) (int, error)
 }
 
+type UserDB interface {
+	GetUserByUsername(context.Context, string) (*models.User, error)
+}
+
 type DataBase interface {
 	BooksDB
 	GenreDB
 	AuthorDB
+	UserDB
 }

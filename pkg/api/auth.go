@@ -1,14 +1,32 @@
 package api
 
-import "net/http"
+import (
+	"context"
+	"net/http"
+	"strings"
+)
 
 func (api *api) RightAuth(w http.ResponseWriter, r *http.Request) bool {
-	str := r.Header.Get("Authorization")
-	if str != api.authToken {
-		api.logger.Error("Invalid Auth Token", "have: ", str, "need: ", api.authToken)
-		http.Error(w, `{"error": "unauthorized"}`, http.StatusUnauthorized)
+	authHeader := r.Header.Get("Authorization")
+	api.logger.Info("Auth header", "header", authHeader)
+
+	const bearerPrefix = "Bearer "
+	if !strings.HasPrefix(authHeader, bearerPrefix) {
+		http.Error(w, "invalid Authorization header format", http.StatusUnauthorized)
 		return false
 	}
-	return true
 
+	tokenStr := strings.TrimPrefix(authHeader, bearerPrefix)
+	api.logger.Info("Token to parse", "token", tokenStr)
+
+	claims, err := api.jwtService.ParseToken(tokenStr)
+	if err != nil {
+		api.logger.Error("JWT parse error", "error", err)
+		http.Error(w, "invalid token", http.StatusUnauthorized)
+		return false
+	}
+
+	ctx := context.WithValue(r.Context(), "user_claims", claims)
+	*r = *r.WithContext(ctx)
+	return true
 }

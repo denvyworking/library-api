@@ -17,6 +17,7 @@ type FakeRepo struct {
 	authors []models.Author
 	books   []models.Book
 	genres  []models.Genre
+	users   []models.User
 
 	// Флаги для эмуляции ошибок (опционально)
 	NewAuthorErr error
@@ -176,4 +177,16 @@ func (f *FakeRepo) UpdateBook(ctx context.Context, id int, update models.BookUpd
 		}
 	}
 	return fmt.Errorf("book with id %d not found", id)
+}
+
+func (f *FakeRepo) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	for _, user := range f.users {
+		if user.Username == username {
+			return &user, nil
+		}
+	}
+	return nil, fmt.Errorf("the user was not found")
 }
