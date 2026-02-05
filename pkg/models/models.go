@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type User struct {
 	ID       int    `db:"id" json:"id"`
 	Username string `db:"username" json:"username"`
@@ -36,4 +38,12 @@ type BookWithAuthor struct {
 type BookUpdate struct {
 	Name  *string `json:"name,omitempty"`
 	Price *int    `json:"price,omitempty"`
+}
+
+type RefreshToken struct {
+	ID        int       `db:"id" json:"id"`
+	UserID    int       `db:"user_id" json:"user_id"`
+	Token     string    `db:"token" json:"token"`
+	ExpiresAt time.Time `db:"expires_at" json:"expires_at"`
+	CreatedAt time.Time `db:"created_at" json:"created_at"`
 }

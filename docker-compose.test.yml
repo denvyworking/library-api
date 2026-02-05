@@ -1,4 +1,3 @@
-# docker-compose.test.yml
 version: '3.8'
 services:
   postgres-test:
@@ -7,7 +6,7 @@ services:
       - "45432:5432"
     environment:
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: leti_test  # ← Автоматически создаст БД
+      POSTGRES_DB: leti_test
     volumes:
       - pg_test:/var/lib/postgresql/data
 

@@ -83,3 +83,38 @@ func TestUpdateBook(t *testing.T) {
 	}
 
 }
+
+func TestGetAllWithAuthors(t *testing.T) {
+	fakeDB := &fake.FakeRepo{}
+	srv := NewService(fakeDB)
+
+	authorID, _ := srv.NewAuthor(context.Background(), models.Author{Author: "Пушкин"})
+	genreID, _ := srv.NewGenre(context.Background(), models.Genre{Genre: "Поэма"})
+	_, _ = srv.CreateBook(context.Background(), models.Book{
+		Name: "Евгений Онегин", Author_id: authorID, Genre_id: genreID, Price: 500,
+	})
+
+	books, err := srv.GetAllWithAuthors(context.Background())
+	require.NoError(t, err)
+	require.Len(t, books, 1)
+	require.Equal(t, "Евгений Онегин", books[0].Name)
+	require.Equal(t, "Пушкин", books[0].AuthorName)
+}
+
+func TestGetBookByID_NotFound(t *testing.T) {
+	fakeDB := &fake.FakeRepo{}
+	srv := NewService(fakeDB)
+
+	_, err := srv.GetBookByID(context.Background(), 999)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "not found")
+}
+
+func TestRemoveBook_NotFound(t *testing.T) {
+	fakeDB := &fake.FakeRepo{}
+	srv := NewService(fakeDB)
+
+	err := srv.RemoveBook(context.Background(), 999)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "not found")
+}

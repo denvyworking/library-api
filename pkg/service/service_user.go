@@ -16,5 +16,4 @@ func (s *Service) ValidateUserCredentials(ctx context.Context, username, passwor
 		return nil, err
 	}
 	return user, nil
-
 }

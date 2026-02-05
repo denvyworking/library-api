@@ -30,3 +30,5 @@ docs/
 
 # .sh
 *.sh
+
+.cursor

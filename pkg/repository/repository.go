@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"leti/pkg/models"
+	"time"
 )
 
 type AuthorDB interface {
@@ -26,6 +27,14 @@ type GenreDB interface {
 
 type UserDB interface {
 	GetUserByUsername(context.Context, string) (*models.User, error)
+	GetUserByID(context.Context, int) (*models.User, error)
+	CreateUser(context.Context, models.User) (int, error)
+	// старый refresh убрать, новый сохранить
+	SaveRefreshToken(context.Context, int, string, time.Time) error
+	// проверить токен и срок
+	GetRefreshToken(context.Context, string) (*models.RefreshToken, error)
+	DeleteRefreshToken(context.Context, string) error
+	DeleteUserRefreshTokens(context.Context, int) error
 }
 
 type DataBase interface {

@@ -6,11 +6,12 @@ import (
 	"strings"
 )
 
+const bearerPrefix = "Bearer "
+
 func (api *api) RightAuth(w http.ResponseWriter, r *http.Request) bool {
 	authHeader := r.Header.Get("Authorization")
 	api.logger.Info("Auth header", "header", authHeader)
 
-	const bearerPrefix = "Bearer "
 	if !strings.HasPrefix(authHeader, bearerPrefix) {
 		http.Error(w, "invalid Authorization header format", http.StatusUnauthorized)
 		return false

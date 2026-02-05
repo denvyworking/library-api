@@ -40,10 +40,9 @@ func main() {
 	}
 	defer db.Close()
 
-	// Генерация секретного ключа (в production — из переменной окружения!)
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
-		jwtSecret = "secret-jwt-key-for-development" // ← ТОЛЬКО для dev!
+		jwtSecret = "secret-jwt-key-for-development"
 	}
 
 	jwtService := auth.NewJWTService(jwtSecret)
