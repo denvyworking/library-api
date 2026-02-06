@@ -68,7 +68,6 @@ func (s *JWTService) GenerateRefreshToken() (string, error) {
 	return base64.URLEncoding.EncodeToString(b), nil
 }
 
-// GetRefreshTokenTTL возвращает время жизни refresh токена
 func (s *JWTService) GetRefreshTokenTTL() time.Duration {
 	return refreshTokenTTL
 }

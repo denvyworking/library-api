@@ -8,6 +8,7 @@ type User struct {
 	Password string `db:"password" json:"-"` // never to API!
 	Role     string `db:"role" json:"role"`
 }
+
 type Book struct {
 	ID        int    `json:"id"`
 	Name      string `json:"name"`
@@ -40,6 +41,7 @@ type BookUpdate struct {
 	Price *int    `json:"price,omitempty"`
 }
 
+// RefreshToken — запись о refresh-токене в БД (для auth-flow: обновление сессии без повторного логина)
 type RefreshToken struct {
 	ID        int       `db:"id" json:"id"`
 	UserID    int       `db:"user_id" json:"user_id"`

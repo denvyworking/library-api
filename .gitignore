@@ -32,3 +32,8 @@ docs/
 *.sh
 
 .cursor
+
+.coverage
+
+
+coverage
